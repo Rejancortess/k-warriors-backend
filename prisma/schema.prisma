@@ -7,6 +7,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum TransactionType {
+  STOCK_IN
+  STOCK_OUT
+}
+
+model User {
+  id          String  @id @default(uuid())
+  firebaseUid String?  @unique
+  name        String
+  email       String  @unique
+  role        Role    @default(STAFF)
+  isActive    Boolean @default(true)
+
+  transactions StockTransaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Product {
   id          String  @id @default(uuid())
   name        String
@@ -19,8 +43,30 @@ model Product {
   price    Decimal? @db.Decimal(12, 2)
   isActive Boolean  @default(true)
 
+  transactions StockTransaction[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([name])
+}
+
+model StockTransaction {
+  id            String          @id @default(uuid())
+  productId     String
+  userId        String
+  type          TransactionType
+  quantity      Int
+  previousStock Int
+  newStock      Int
+  remarks       String?
+
+  product Product @relation(fields: [productId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([productId, createdAt])
+  @@index([userId])
 }
