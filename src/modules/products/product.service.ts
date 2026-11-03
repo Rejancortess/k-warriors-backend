@@ -28,10 +28,14 @@ export const productService = {
     return {
       total: products.length,
       lowStock: products.filter(
-        (product) => product.quantity > 0 && product.quantity <= product.minStock,
+        (product) =>
+          product.quantity > 0 && product.quantity <= product.minStock,
       ).length,
       outOfStock: products.filter((product) => product.quantity === 0).length,
-      totalQuantity: products.reduce((sum, product) => sum + product.quantity, 0),
+      totalQuantity: products.reduce(
+        (sum, product) => sum + product.quantity,
+        0,
+      ),
     };
   },
 
@@ -94,6 +98,12 @@ export const productService = {
     });
   },
 
+  deletePermanently(id: string) {
+    return prisma.product.delete({
+      where: { id },
+    });
+  },
+
   async getTransactions(productId: string) {
     const product = await prisma.product.findUnique({
       where: { id: productId },
@@ -112,6 +122,43 @@ export const productService = {
         },
       },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    });
+  },
+
+  async search(query: string) {
+    return prisma.product.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          {
+            name: {
+              contains: query,
+              mode: "insensitive",
+            },
+          },
+          {
+            sku: {
+              contains: query,
+              mode: "insensitive",
+            },
+          },
+          {
+            barcode: {
+              contains: query,
+            },
+          },
+          {
+            description: {
+              contains: query,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+      take: 10,
+      orderBy: {
+        name: "asc",
+      },
     });
   },
 };

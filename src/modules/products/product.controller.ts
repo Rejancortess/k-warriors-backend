@@ -380,4 +380,63 @@ export const productController = {
       return handleError(res, error, "Failed to fetch product transactions");
     }
   },
+
+  async deletePermanently(req: Request, res: Response) {
+    const id = routeParam(req.params.id);
+
+    if (!id) {
+      return fail(res, 400, "Product ID is required");
+    }
+
+    try {
+      await productService.deletePermanently(id);
+
+      return res.status(200).json({
+        success: true,
+        message: "Product permanently deleted",
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2003"
+      ) {
+        return fail(
+          res,
+          409,
+          "Cannot permanently delete a product with stock transaction history",
+        );
+      }
+
+      return handleError(res, error, "Failed to delete product");
+    }
+  },
+
+  async search(req: Request, res: Response) {
+    const rawQuery = req.query.q;
+
+    if (typeof rawQuery !== "string") {
+      return fail(res, 400, "Search query is required");
+    }
+
+    const query = rawQuery.trim();
+
+    if (!query) {
+      return fail(res, 400, "Search query cannot be empty");
+    }
+
+    if (query.length > 100) {
+      return fail(res, 400, "Search query is too long");
+    }
+
+    try {
+      const products = await productService.search(query);
+
+      return res.status(200).json({
+        success: true,
+        data: products,
+      });
+    } catch (error) {
+      return handleError(res, error, "Failed to search products");
+    }
+  },
 };
