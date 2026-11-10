@@ -98,4 +98,12 @@ export const authService = {
       throw error;
     }
   },
+
+  async updateName(userId: string, name: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { name },
+      select: userSelect,
+    });
+  },
 };
